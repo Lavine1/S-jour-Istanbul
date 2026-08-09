@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>İstanbul — Notre carnet</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FBF3E3;
+    --paper-2:#F6E9D2;
+    --ink:#1B3A5C;
+    --ink-soft:#3B5D82;
+    --gold:#F2A93B;
+    --coral:#FF6B4A;
+    --teal:#2EC4B6;
+    --white:#FFFFFF;
+
+    --c-uskudar:#2EC4B6;
+    --c-sultanahmet:#D64545;
+    --c-eyup:#3D8361;
+    --c-bebek:#4A90D9;
+    --c-buyukada:#FF6F91;
+    --c-kadikoy:#F2A93B;
+    --c-beyoglu:#8E5FE0;
+    --c-besiktas:#2C4870;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    font-family:'Quicksand',sans-serif;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{font-family:'Baloo 2',cursive;}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    position:relative;
+    background:linear-gradient(180deg,#DCEEF5 0%,var(--paper) 78%);
+    padding:28px 20px 18px;
+    overflow:hidden;
+    border-bottom:4px solid var(--ink);
+  }
+  .hero-inner{max-width:1180px;margin:0 auto;position:relative;z-index:2;}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    background:var(--white);border:2.5px solid var(--ink);
+    border-radius:999px;padding:5px 14px;font-weight:700;
+    font-size:13px;letter-spacing:.02em;
+    box-shadow:3px 3px 0 var(--ink);
+    margin-bottom:14px;
+  }
+  h1.title{
+    font-size:clamp(34px,6vw,58px);
+    line-height:0.98;margin:0 0 8px;
+    color:var(--ink);font-weight:800;
+    text-shadow:3px 3px 0 var(--gold);
+  }
+  .subtitle{
+    font-size:16px;font-weight:600;color:var(--ink-soft);
+    max-width:520px;margin:0 0 6px;
+  }
+  .dates-pill{
+    display:inline-block;margin-top:10px;
+    background:var(--ink);color:var(--paper);
+    font-family:'Baloo 2';font-weight:700;font-size:14px;
+    padding:7px 16px;border-radius:999px;
+  }
+
+  .skyline{
+    position:absolute;bottom:-6px;right:0;left:0;
+    height:120px;pointer-events:none;z-index:1;
+  }
+
+  /* ---------- LEGEND ---------- */
+  .legend-wrap{
+    max-width:1180px;margin:18px auto 0;padding:0 20px;
+  }
+  .legend{
+    display:flex;flex-wrap:wrap;gap:9px;
+  }
+  .chip{
+    display:flex;align-items:center;gap:7px;
+    border:2.5px solid var(--ink);
+    background:var(--white);
+    padding:7px 13px 7px 9px;border-radius:999px;
+    font-weight:700;font-size:13.5px;cursor:pointer;
+    box-shadow:2.5px 2.5px 0 var(--ink);
+    transition:transform .12s ease, box-shadow .12s ease, opacity .15s ease;
+    user-select:none;
+  }
+  .chip:hover{transform:translateY(-2px);}
+  .chip:active{transform:translateY(0px);box-shadow:1px 1px 0 var(--ink);}
+  .chip.off{opacity:.38;}
+  .chip .dot{
+    width:16px;height:16px;border-radius:50%;
+    border:2px solid var(--ink);flex:0 0 auto;
+  }
+  .chip .emoji{font-size:15px;}
+
+  .legend-hint{
+    font-size:12.5px;color:var(--ink-soft);font-weight:600;
+    margin:9px 2px 0;
+  }
+
+  /* ---------- MAIN LAYOUT ---------- */
+  .wrap{
+    max-width:1180px;margin:20px auto 60px;padding:0 20px;
+    display:grid;grid-template-columns: 1.15fr 1fr;gap:22px;
+    align-items:flex-start;
+  }
+  @media (max-width: 880px){
+    .wrap{grid-template-columns:1fr;}
+  }
+
+  .map-card{
+    position:sticky;top:16px;
+    border:3px solid var(--ink);
+    border-radius:22px;
+    overflow:hidden;
+    box-shadow:6px 6px 0 var(--ink);
+    background:var(--white);
+  }
+  @media (max-width:880px){ .map-card{position:relative;top:0;} }
+
+  #map{ height:560px; width:100%; background:#DCEEF5;}
+  @media (max-width:880px){ #map{height:400px;} }
+
+  .map-footer{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 14px;border-top:3px solid var(--ink);
+    background:var(--paper-2);
+  }
+  .reset-btn{
+    font-family:'Baloo 2';font-weight:700;font-size:13.5px;
+    background:var(--gold);color:var(--ink);border:2.5px solid var(--ink);
+    border-radius:999px;padding:7px 14px;cursor:pointer;
+    box-shadow:2.5px 2.5px 0 var(--ink);
+  }
+  .reset-btn:active{transform:translate(1px,1px);box-shadow:1.5px 1.5px 0 var(--ink);}
+  .map-note{font-size:12px;color:var(--ink-soft);font-weight:600;}
+
+  /* ---------- ACCORDION ---------- */
+  .sectors{display:flex;flex-direction:column;gap:14px;}
+  .sector-card{
+    border:3px solid var(--ink);
+    border-radius:20px;
+    background:var(--white);
+    box-shadow:5px 5px 0 var(--ink);
+    overflow:hidden;
+    transition:box-shadow .12s ease;
+  }
+  .sector-head{
+    display:flex;align-items:center;gap:12px;
+    padding:14px 16px;cursor:pointer;
+    background:var(--sector-color, var(--gold));
+  }
+  .sector-head .badge{
+    width:38px;height:38px;border-radius:50%;
+    background:var(--white);border:2.5px solid var(--ink);
+    display:flex;align-items:center;justify-content:center;
+    font-size:19px;flex:0 0 auto;
+  }
+  .sector-head .name{
+    font-family:'Baloo 2';font-weight:800;font-size:19px;
+    color:var(--ink);flex:1;
+  }
+  .sector-head .count{
+    font-family:'Quicksand';font-weight:700;font-size:12.5px;
+    background:rgba(255,255,255,.7);border:2px solid var(--ink);
+    border-radius:999px;padding:3px 9px;color:var(--ink);
+  }
+  .sector-head .chev{
+    font-size:18px;transition:transform .2s ease;color:var(--ink);
+  }
+  .sector-card.open .chev{transform:rotate(180deg);}
+
+  .sector-tag{
+    font-size:11.5px;font-weight:700;
+    background:var(--ink);color:var(--white);
+    border-radius:999px;padding:2px 9px;
+    margin-left:2px;
+  }
+
+  .sector-body{
+    max-height:0;overflow:hidden;
+    transition:max-height .28s ease;
+    background:var(--white);
+  }
+  .sector-card.open .sector-body{max-height:900px;}
+
+  .activity-list{list-style:none;margin:0;padding:12px 16px 16px;}
+  .activity-item{
+    display:flex;align-items:flex-start;gap:10px;
+    padding:10px 4px;border-bottom:2px dashed #E4D9C2;
+    font-weight:600;font-size:14.5px;
+  }
+  .activity-item:last-child{border-bottom:none;}
+  .activity-item .acheck{
+    width:19px;height:19px;flex:0 0 auto;margin-top:2px;
+    accent-color:var(--gold);cursor:pointer;
+  }
+  .activity-item .aicon{font-size:17px;flex:0 0 auto;margin-top:1px;}
+  .activity-item .aname-wrap{flex:1;display:flex;flex-direction:column;gap:2px;}
+  .activity-item .aname{color:var(--ink);}
+  .activity-item .adesc{
+    font-size:12px;font-weight:600;color:var(--ink-soft);
+    line-height:1.35;
+  }
+  .activity-item.done{opacity:.55;}
+  .activity-item.done .aname{text-decoration:line-through;}
+  .activity-item .aprice{margin-top:1px;
+    font-family:'Baloo 2';font-weight:700;font-size:12.5px;
+    background:var(--paper-2);border:2px solid var(--ink);
+    border-radius:999px;padding:3px 10px;color:var(--ink);
+    white-space:nowrap;
+  }
+  .activity-item.fixed{background:#FFF3D6;border-radius:10px;padding-left:8px;}
+
+  .sector-note{
+    font-size:12.5px;color:var(--ink-soft);font-weight:600;
+    padding:0 16px 14px;
+  }
+
+  footer.page-footer{
+    text-align:center;padding:26px 20px 40px;
+    font-size:13px;color:var(--ink-soft);font-weight:600;
+  }
+
+  /* leaflet popup restyle */
+  .leaflet-popup-content-wrapper{
+    border-radius:14px;border:2.5px solid var(--ink);
+    box-shadow:4px 4px 0 var(--ink);
+    padding:0;overflow:hidden;
+  }
+  .leaflet-popup-content{margin:0 !important;width:260px !important;}
+  .leaflet-popup-tip{border:2.5px solid var(--ink);}
+  .popup-card{
+    display:flex;align-items:flex-start;gap:11px;
+    padding:12px 13px;
+  }
+  .popup-icon{
+    width:46px;height:46px;border-radius:13px;flex:0 0 auto;
+    display:flex;align-items:center;justify-content:center;
+    font-size:23px;border:2.5px solid var(--ink);
+  }
+  .popup-text{flex:1;min-width:0;}
+  .popup-title{font-family:'Baloo 2';font-weight:700;font-size:15px;color:var(--ink);margin:0 0 3px;line-height:1.15;}
+  .popup-price{font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:5px;}
+  .popup-desc{font-size:12px;line-height:1.4;color:var(--ink);margin:0;font-weight:600;}
+  .pin-marker{
+    width:34px;height:34px;border-radius:50% 50% 50% 0;
+    transform:rotate(-45deg);
+    border:2.5px solid var(--ink);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:2px 2px 0 rgba(0,0,0,.25);
+  }
+  .pin-marker span{transform:rotate(45deg);font-size:15px;}
+  .pin-marker.done{opacity:.5;}
+  .pin-marker .pin-check{
+    position:absolute;top:-6px;right:-6px;
+    width:17px;height:17px;border-radius:50%;
+    background:#2ECC71;border:2px solid var(--ink);
+    display:flex;align-items:center;justify-content:center;
+    font-style:normal;font-size:9px;color:var(--white);
+    transform:rotate(45deg);
+  }
+  .pin-marker{position:relative;}
+
+  /* ---------- MOBILE REFINEMENTS ---------- */
+  @media (max-width:480px){
+    .hero{padding:20px 16px 14px;}
+    .eyebrow{font-size:11.5px;padding:4px 11px;margin-bottom:10px;}
+    h1.title{font-size:clamp(28px,9vw,38px);text-shadow:2px 2px 0 var(--gold);}
+    .subtitle{font-size:14px;}
+    .dates-pill{font-size:12.5px;padding:6px 12px;}
+    .skyline{height:70px;}
+
+    .legend-wrap{padding:0 16px;margin-top:14px;}
+    .chip{font-size:12.5px;padding:6px 11px 6px 8px;}
+    .legend-hint{font-size:11.5px;}
+
+    .wrap{padding:0 16px;margin:16px auto 40px;gap:16px;}
+    .map-card{border-radius:16px;box-shadow:4px 4px 0 var(--ink);}
+    #map{height:340px;}
+    .map-footer{padding:9px 12px;flex-wrap:wrap;gap:8px;}
+    .reset-btn{font-size:12.5px;padding:6px 12px;}
+    .map-note{font-size:11.5px;}
+
+    .sector-card{border-radius:16px;box-shadow:4px 4px 0 var(--ink);}
+    .sector-head{padding:12px 13px;gap:10px;}
+    .sector-head .badge{width:32px;height:32px;font-size:16px;}
+    .sector-head .name{font-size:16.5px;}
+    .sector-tag{font-size:10px;padding:2px 7px;}
+    .activity-list{padding:10px 13px 13px;}
+    .activity-item{padding:8px 2px;font-size:13.5px;}
+    .activity-item .adesc{font-size:11.5px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <span class="eyebrow">🧳 8 – 14 août · Gleam Bomonti</span>
+    <h1 class="title">İstanbul,<br>notre carnet</h1>
+    <p class="subtitle">Liste d'activités par secteur — on choisit selon l'envie du jour.</p>
+    <span class="dates-pill">📅 9 août fixe · Üsküdar + théâtre le soir</span>
+  </div>
+  <svg class="skyline" viewBox="0 0 1200 140" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,140 L0,90 Q30,70 60,90 L60,60 Q60,45 75,45 Q90,45 90,60 L90,90 Q120,70 150,90 L150,110 L190,110 L190,70 Q190,50 210,50 Q230,50 230,70 L230,60 Q230,30 260,30 Q290,30 290,60 L290,70 Q290,50 310,50 Q330,50 330,70 L330,110 L400,110 L400,80 Q430,60 460,80 L460,50 Q460,20 490,20 Q520,20 520,50 L520,80 Q550,60 580,80 L580,140 Z" fill="#BFE0EA" opacity="0.9"/>
+    <path d="M550,140 L550,95 Q580,78 610,95 L610,65 Q610,50 625,50 Q640,50 640,65 L640,95 Q670,78 700,95 L700,115 L760,115 L760,75 Q760,45 790,45 Q820,45 820,75 L820,60 Q820,25 855,25 Q890,25 890,60 L890,75 L950,75 Q980,60 1010,75 L1010,45 Q1010,15 1045,15 Q1080,15 1080,45 L1080,75 Q1110,60 1140,75 L1140,140 Z" fill="#8FCBD9" opacity="0.9"/>
+    <circle cx="1000" cy="35" r="16" fill="#F2A93B" opacity="0.55"/>
+  </svg>
+</div>
+
+<div class="legend-wrap">
+  <div class="legend" id="legend"></div>
+  <p class="legend-hint">👆 Clique un secteur pour l'isoler sur la carte, ou sur une carte ci-dessous pour déplier ses activités.</p>
+</div>
+
+<div class="wrap">
+  <div class="map-card">
+    <div id="map"></div>
+    <div class="map-footer">
+      <span class="map-note">📍 <span id="pin-count">0</span> lieux épinglés</span>
+      <button class="reset-btn" onclick="resetView()">🔄 Tout afficher</button>
+    </div>
+  </div>
+
+  <div class="sectors" id="sectors"></div>
+</div>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const SECTORS = [
+  { key:'uskudar', label:'Üsküdar', emoji:'🌉', color:'var(--c-uskudar)', hex:'#2EC4B6', fixed:true,
+    note:'Fixe le 9 août — pièce de théâtre en soirée',
+    activities:[
+      {icon:'🪂', name:'Zipline Nakkaştepe', price:'~6-12€', lat:41.0338, lng:29.0308, desc:"Tyrolienne dans le Millet Bahçesi, sensations garanties avec vue sur le Bosphore. Mieux vaut y aller tôt, l'attente peut grimper."},
+      {icon:'🕌', name:'Camlıca camii', price:'gratuit', lat:41.0186, lng:29.0714, desc:"La plus grande mosquée de Turquie, perchée sur la colline de Çamlıca. Architecture moderne impressionnante et vue à 360° sur Istanbul."},
+      {icon:'🗼', name:'Çamlıca Tower', price:'~17-18€', lat:41.0163, lng:29.0656, desc:"Tour en forme de tulipe, la plus haute d'Istanbul. Restaurant panoramique tout en haut, parfait pour un thé avec vue."},
+      {icon:'🏛️', name:'Beylerbeyi palais', price:'~9-10€', lat:41.0442, lng:29.0421, desc:"Ancienne résidence d'été ottomane au bord du Bosphore, plus intime que Dolmabahçe. Jardins et terrasses avec vue sur le pont."},
+      {icon:'🚶', name:'Kuzguncuk (balade)', price:'gratuit', lat:41.0313, lng:29.0308, desc:"Petit village dans la ville : maisons en bois colorées, ruelles calmes, mosquée, synagogue et église à quelques pas les unes des autres."},
+      {icon:'🎭', name:'Pièce "Aşkı Memnu Karşıtı" (soirée)', price:'billet', lat:41.0262, lng:29.0161, fixed:true, desc:"Représentation théâtrale en soirée à Üsküdar — la contrainte fixe qui ancre toute cette journée au calendrier."}
+    ]
+  },
+  { key:'sultanahmet', label:'Sultanahmet', emoji:'🕌', color:'var(--c-sultanahmet)', hex:'#D64545',
+    activities:[
+      {icon:'⛩️', name:'Sainte-Sophie', price:'~25€', lat:41.0086, lng:28.9802, desc:"Chef-d'œuvre byzantin puis ottoman, presque 1500 ans d'histoire sous une coupole vertigineuse. LE monument le plus emblématique d'Istanbul."},
+      {icon:'🕌', name:'Mosquée Bleue', price:'gratuite', lat:41.0054, lng:28.9768, desc:"Six minarets, plus de 20 000 carreaux de céramique bleue à l'intérieur. Juste en face de Sainte-Sophie, à visiter en dehors des prières."},
+      {icon:'💧', name:'Citerne Basilique', price:'~30€', lat:41.0084, lng:28.9779, desc:"Ancien réservoir d'eau souterrain byzantin, colonnes éclairées, ambiance mystérieuse. Les deux têtes de Méduse sont incontournables."},
+      {icon:'🛍️', name:'Grand Bazaar', price:'entrée libre', lat:41.0106, lng:28.9681, desc:"Un des plus grands marchés couverts au monde, plus de 4000 boutiques. Tapis, bijoux, céramiques — le marchandage fait partie du jeu."},
+      {icon:'👑', name:'Topkapi', price:'~30-35€', lat:41.0115, lng:28.9833, desc:"Palais des sultans ottomans pendant 400 ans. Cours somptueuses, joyaux du trésor impérial, vue sur le Bosphore depuis les jardins."},
+      {icon:'🌶️', name:'Mısır Çarşısı', price:'entrée libre', lat:41.0165, lng:28.9704, desc:"Le bazar aux épices : montagnes de couleurs, thés, loukoums et épices à perte de vue. Plus compact et moins écrasant que le Grand Bazaar."}
+    ]
+  },
+  { key:'eyup', label:'Eyüp', emoji:'🚡', color:'var(--c-eyup)', hex:'#3D8361',
+    activities:[
+      {icon:'🚡', name:'Téléphérique + Pierre Loti tepesi', price:'~1-2€', lat:41.0543, lng:28.9334, desc:"Montée en téléphérique jusqu'à la colline Pierre Loti, l'un des plus beaux points de vue sur la Corne d'Or, surtout au coucher du soleil."},
+      {icon:'🕌', name:'Mosquée Eyüp', price:'gratuite', lat:41.0479, lng:28.9339, desc:"Un des lieux les plus sacrés de l'islam sunnite en Turquie, abrite le tombeau du compagnon du prophète. Lieu de pèlerinage très respecté."},
+      {icon:'🧺', name:'Marché souvenirs', price:'variable', lat:41.0480, lng:28.9345, desc:"Petit marché aux abords de la mosquée : chapelets, objets religieux, souvenirs artisanaux, ambiance locale et authentique."},
+      {icon:'🚂', name:'Miniatürk', price:'~10€', lat:41.0662, lng:28.9558, desc:"Parc miniature avec les monuments les plus célèbres de Turquie reproduits à échelle réduite. Sympa en famille, ludique."},
+      {icon:'🚗', name:'Rahmi Koç Museum', price:'~10-15€', lat:41.0448, lng:28.9503, desc:"Musée du transport et de l'industrie : voitures anciennes, avions, sous-marin à visiter. Très interactif, adapté à tous les âges."}
+    ]
+  },
+  { key:'bebek', label:'Bebek', emoji:'⛵', color:'var(--c-bebek)', hex:'#4A90D9',
+    activities:[
+      {icon:'🌊', name:'Bebek sahili', price:'gratuit', lat:41.0775, lng:29.0431, desc:"Front de mer chic du Bosphore, yachts amarrés, cafés branchés. Un des quartiers les plus huppés d'Istanbul, ambiance décontractée."},
+      {icon:'🌳', name:'Emirgan korusu', price:'gratuit', lat:41.1080, lng:29.0554, desc:"Grand parc paysager en bord de Bosphore, ancien domaine ottoman. Célèbre pour son festival des tulipes au printemps, agréable toute l'année."},
+      {icon:'🖼️', name:'Musée Sakıp Sabancı', price:'~13€', lat:41.1075, lng:29.0559, desc:"Villa ottomane transformée en musée d'art, calligraphie ottomane et expositions temporaires d'art moderne. Beau jardin en bord d'eau."},
+      {icon:'🏰', name:'Rumeli Hisarı', price:'~5€', lat:41.0849, lng:29.0563, desc:"Forteresse construite par Mehmed le Conquérant avant la prise de Constantinople. Remparts impressionnants, vue sur le pont du Bosphore."},
+      {icon:'🗼', name:'Sapphire Tower (Levent)', price:'~11€', lat:41.0781, lng:29.0114, desc:"Plus haut gratte-ciel d'Istanbul, terrasse d'observation et simulateur 4D de vol en hélicoptère au-dessus de la ville. Vue vertigineuse."},
+      {icon:'🎬', name:'Ciné Hannas 3 à Levent (soirée)', price:'billet', lat:41.0821, lng:29.0106, desc:"Séance ciné en soirée dans le quartier d'affaires de Levent, pour clore la journée autrement."}
+    ]
+  },
+  { key:'buyukada', label:'Büyükada', emoji:'🚲', color:'var(--c-buyukada)', hex:'#FF6F91',
+    activities:[
+      {icon:'⛴️', name:'Ferry', price:'~1-3€', lat:40.8746, lng:29.1305, desc:"Traversée en ferry vers la plus grande des îles aux Princes, pas de voitures sur l'île — juste vélos et calèches."},
+      {icon:'🚲', name:'Location vélo', price:'~5-8€/h', lat:40.8735, lng:29.1300, desc:"Meilleur moyen d'explorer l'île sans voitures : criques, villas victoriennes en bois, forêts de pins."},
+      {icon:'🕰️', name:'Saat kulesi', price:'gratuit', lat:40.8734, lng:29.1264, desc:"Petite tour de l'horloge au cœur du village, point de repère central pour commencer la balade."},
+      {icon:'🌲', name:'Dilburnu tabiat parkı', price:'gratuit', lat:40.8580, lng:29.1260, desc:"Parc naturel au sud de l'île, sentiers ombragés et vue sur la mer de Marmara, loin de l'agitation du débarcadère."},
+      {icon:'🏛️', name:'Adalar müzesi', price:'~2-3€', lat:40.8740, lng:29.1300, desc:"Petit musée retraçant l'histoire des îles aux Princes, leur rôle d'exil et leur âge d'or victorien."},
+      {icon:'⛪', name:'Église Ayayorgi', price:'gratuit', lat:40.8580, lng:29.1280, desc:"Monastère orthodoxe au sommet de la colline la plus haute de l'île, montée à pied (ou en âne) récompensée par la vue."}
+    ]
+  },
+  { key:'kadikoy', label:'Kadıköy / Moda', emoji:'📚', color:'var(--c-kadikoy)', hex:'#F2A93B',
+    activities:[
+      {icon:'🍓', name:'Cilek sokak', price:'balade', lat:40.9900, lng:29.0270, desc:"Petite rue animée pleine de bars et restaurants, ambiance bohème et étudiante typique de Kadıköy."},
+      {icon:'📖', name:'Istanbul kitapçısı', price:'balade', lat:40.9905, lng:29.0265, desc:"Librairie repère du quartier, bon aperçu de la scène culturelle locale de la rive asiatique."},
+      {icon:'🎬', name:'Musée Kemal Sunal', price:'~2-5€', lat:40.9860, lng:29.0250, desc:"Petit musée dédié à l'acteur comique le plus populaire de Turquie, une figure très aimée localement."},
+      {icon:'🎸', name:'Musée Barış Manço', price:'~2-5€', lat:40.9897, lng:29.0294, desc:"Ancienne maison du chanteur culte Barış Manço, transformée en musée. Instruments, souvenirs, ambiance intime."},
+      {icon:'🛍️', name:'Bağdat Caddesi', price:'balade shopping', lat:40.9649, lng:29.0724, desc:"Immense avenue de 6 km, LE spot shopping et restos de la rive asiatique, très prisée des locaux plutôt que des touristes."}
+    ]
+  },
+  { key:'beyoglu', label:'Beyoğlu / Galata', emoji:'🗼', color:'var(--c-beyoglu)', hex:'#8E5FE0',
+    activities:[
+      {icon:'🗼', name:'Galata Tower', price:'~30€', lat:41.0256, lng:28.9744, desc:"Tour médiévale génoise du 14e siècle, vue à 360° sur la Corne d'Or et le Bosphore. Le classique incontournable de Beyoğlu."},
+      {icon:'🚋', name:'Istiklal Caddesi', price:'balade', lat:41.0344, lng:28.9779, desc:"La grande artère piétonne de Beyoğlu, tram rouge historique, boutiques, passages couverts et ambiance animée à toute heure."},
+      {icon:'🌊', name:'Galataport', price:'balade', lat:41.0245, lng:28.9776, desc:"Nouvelle promenade moderne en bord de mer à Karaköy, boutiques et restos avec vue sur le Bosphore, agréable pour une balade en soirée."}
+    ]
+  },
+  { key:'besiktas', label:'Beşiktaş / Ortaköy', emoji:'👑', color:'var(--c-besiktas)', hex:'#2C4870',
+    activities:[
+      {icon:'🗼', name:'Kız Kulesi', price:'~7€ / ~32€', lat:41.0211, lng:29.0041, desc:"La Tour de Léandre, petite tour légendaire posée au milieu du Bosphore. Accessible en bateau depuis Kabataş ou Karaköy, magique au coucher du soleil.", done:true},
+      {icon:'👑', name:'Palais de Dolmabahçe', price:'~55€', lat:41.0392, lng:28.9903, desc:"Palais ottoman de style européen, lustres géants et façade démesurée en bord de Bosphore. Plus grandiose (et plus visité) que Topkapi.", done:true},
+      {icon:'🕌', name:'Mosquée Ortaköy', price:'gratuite', lat:41.0478, lng:29.0268, desc:"Petite mosquée baroque posée directement au bord de l'eau, avec le pont du Bosphore en toile de fond. Photo emblématique garantie.", done:true},
+      {icon:'🌳', name:'Yıldız Park', price:'gratuit', lat:41.0499, lng:29.0146, desc:"Ancien domaine impérial transformé en grand parc boisé, pavillons ottomans disséminés, calme après l'agitation du bord de mer.", done:true}
+    ]
+  }
+];
+
+// ---- "fait" state (persisted per appareil via localStorage) ----
+const STORAGE_KEY = 'istanbulCarnetDone';
+function loadDoneState(){
+  try{ const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : {}; }
+  catch(e){ return {}; }
+}
+function saveDoneState(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(doneState)); }catch(e){}
+}
+let doneState = loadDoneState();
+SECTORS.forEach(sector=>{
+  sector.activities.forEach((a,i)=>{
+    const id = `${sector.key}__${i}`;
+    if(!(id in doneState)) doneState[id] = !!a.done;
+  });
+});
+saveDoneState();
+
+// ---- build map ----
+const map = L.map('map', { scrollWheelZoom:true }).setView([41.02, 29.00], 12);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap, © CARTO',
+  maxZoom: 19
+}).addTo(map);
+
+const sectorLayers = {};
+const allBounds = [];
+let totalPins = 0;
+
+function makeIcon(hex, emoji, done){
+  return L.divIcon({
+    className:'',
+    html:`<div class="pin-marker${done ? ' done':''}" style="background:${hex};">
+            <span>${emoji}</span>
+            ${done ? '<i class="pin-check">✔</i>' : ''}
+          </div>`,
+    iconSize:[34,34],
+    iconAnchor:[17,34],
+    popupAnchor:[0,-30]
+  });
+}
+
+const markerRefs = {};
+
+SECTORS.forEach(sector=>{
+  const layerGroup = L.layerGroup().addTo(map);
+  sectorLayers[sector.key] = layerGroup;
+  sector.activities.forEach((a,i)=>{
+    const id = `${sector.key}__${i}`;
+    const icon = makeIcon(sector.hex, a.icon, doneState[id]);
+    const marker = L.marker([a.lat, a.lng], {icon}).addTo(layerGroup);
+    markerRefs[id] = marker;
+    marker.bindPopup(`
+      <div class="popup-card">
+        <div class="popup-icon" style="background:linear-gradient(135deg, ${sector.hex}66, ${sector.hex}33);">${a.icon}</div>
+        <div class="popup-text">
+          <div class="popup-title">${a.name}</div>
+          <div class="popup-price">${sector.emoji} ${sector.label}</div>
+          <p class="popup-desc">${a.desc || ''}</p>
+        </div>
+      </div>
+    `, {minWidth:260, maxWidth:260});
+    allBounds.push([a.lat, a.lng]);
+    totalPins++;
+  });
+});
+document.getElementById('pin-count').textContent = totalPins;
+map.fitBounds(allBounds, {padding:[30,30]});
+
+function resetView(){
+  map.fitBounds(allBounds, {padding:[30,30]});
+  SECTORS.forEach(s=>{ setSectorVisible(s.key, true); });
+}
+
+function setSectorVisible(key, visible){
+  const layer = sectorLayers[key];
+  if(visible){ if(!map.hasLayer(layer)) layer.addTo(map); }
+  else { if(map.hasLayer(layer)) map.removeLayer(layer); }
+  const chip = document.querySelector(`.chip[data-key="${key}"]`);
+  if(chip) chip.classList.toggle('off', !visible);
+}
+
+// ---- legend ----
+const legendEl = document.getElementById('legend');
+const visibility = {};
+SECTORS.forEach(s=> visibility[s.key] = true);
+
+SECTORS.forEach(s=>{
+  const chip = document.createElement('div');
+  chip.className='chip';
+  chip.dataset.key = s.key;
+  chip.innerHTML = `<span class="dot" style="background:${s.hex}"></span><span class="emoji">${s.emoji}</span>${s.label}`;
+  chip.addEventListener('click', ()=>{
+    visibility[s.key] = !visibility[s.key];
+    setSectorVisible(s.key, visibility[s.key]);
+    if(visibility[s.key]){
+      const bounds = s.activities.map(a=>[a.lat,a.lng]);
+      map.fitBounds(bounds, {padding:[60,60]});
+      openSector(s.key);
+    }
+  });
+  legendEl.appendChild(chip);
+});
+
+// ---- accordion cards ----
+const sectorsEl = document.getElementById('sectors');
+SECTORS.forEach(s=>{
+  const card = document.createElement('div');
+  card.className='sector-card';
+  card.id = `card-${s.key}`;
+  card.innerHTML = `
+    <div class="sector-head" style="--sector-color:${hexToSoft(s.hex)}" onclick="toggleSector('${s.key}')">
+      <div class="badge">${s.emoji}</div>
+      <div class="name">${s.label} ${s.fixed ? '<span class="sector-tag">FIXE · 9 août</span>' : ''}</div>
+      <div class="chev">▾</div>
+    </div>
+    <div class="sector-body">
+      ${s.note ? `<p class="sector-note">🎭 ${s.note}</p>` : ''}
+      <ul class="activity-list">
+        ${s.activities.map((a,i)=>{
+          const id = `${s.key}__${i}`;
+          const isDone = !!doneState[id];
+          return `
+          <li class="activity-item ${a.fixed ? 'fixed':''} ${isDone ? 'done':''}" data-id="${id}">
+            <input type="checkbox" class="acheck" data-id="${id}" ${isDone ? 'checked':''}>
+            <span class="aicon">${a.icon}</span>
+            <div class="aname-wrap">
+              <span class="aname">${a.name}</span>
+              ${a.desc ? `<span class="adesc">${a.desc}</span>` : ''}
+            </div>
+          </li>`;
+        }).join('')}
+      </ul>
+    </div>
+  `;
+  sectorsEl.appendChild(card);
+});
+
+function toggleSector(key){
+  const card = document.getElementById(`card-${key}`);
+  const wasOpen = card.classList.contains('open');
+  document.querySelectorAll('.sector-card').forEach(c=>c.classList.remove('open'));
+  if(!wasOpen) card.classList.add('open');
+}
+function openSector(key){
+  document.querySelectorAll('.sector-card').forEach(c=>c.classList.remove('open'));
+  document.getElementById(`card-${key}`).classList.add('open');
+  document.getElementById(`card-${key}`).scrollIntoView({behavior:'smooth', block:'center'});
+}
+function hexToSoft(hex){
+  // lighten a hex color for header background
+  const c = hex.replace('#','');
+  const r = parseInt(c.substring(0,2),16), g = parseInt(c.substring(2,4),16), b = parseInt(c.substring(4,6),16);
+  const mix = (v)=> Math.round(v + (255-v)*0.72);
+  return `rgb(${mix(r)},${mix(g)},${mix(b)})`;
+}
+
+// ---- checkbox "fait" interactions ----
+document.getElementById('sectors').addEventListener('click', (e)=>{
+  const box = e.target.closest('.acheck');
+  if(!box) return;
+  e.stopPropagation();
+  const id = box.dataset.id;
+  doneState[id] = box.checked;
+  saveDoneState();
+  const li = box.closest('.activity-item');
+  li.classList.toggle('done', box.checked);
+  const [secKey, idx] = id.split('__');
+  const sector = SECTORS.find(s=>s.key===secKey);
+  const a = sector.activities[+idx];
+  const marker = markerRefs[id];
+  if(marker) marker.setIcon(makeIcon(sector.hex, a.icon, box.checked));
+});
+document.getElementById('sectors').addEventListener('change', (e)=>{
+  // handled above via click for toggle class + persistence; change kept for a11y
+});
+
+// open first (fixed) sector by default
+openSector('uskudar');
+</script>
+</body>
+</html>
